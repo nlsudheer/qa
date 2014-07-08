@@ -1,0 +1,7 @@
+<suite name="Selenium Grid with webdriver" thread-count="1">   
+	 <test name="Selenium Grid Demo">
+	 	<classes>
+			<class name="com.clh.demo.web.tests.LoginTests"/>
+		</classes>
+	</test>
+ </suite>

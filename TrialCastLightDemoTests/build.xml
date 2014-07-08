@@ -1,0 +1,161 @@
+<?xml version='1.0'?>
+<!-- Description : build.xml [To run the tests from the command line] -->
+
+<project name="CastLightDemoTests" basedir="." default="test">
+
+	<!-- /******************************************************************
+			Define properties
+	***********************************************************************/ -->
+	
+	<property name="test.platform" value="web" />
+	<property name="browser" value="firefox" />
+	<property name="test.url" value="https://demopreprod.castlighthealth.com/login" />
+	
+	<property name="libs" location="libs" />
+	<property name="src" location="src" />
+	<property name="build" location="build" />
+	<property name="screenshots" location="${build}/screenshots" />
+	<property name="classes" location="${build}/classes" />
+	<property name="logs" location="${build}/logs" />
+	<property name="reports" location="${build}/reports" />
+	<property name="testNG.report" value="${reports}/testng-report" />
+	<property name="junit.report" value="${reports}/junit-report" />
+	<property name="xslt.report" value="${reports}/xslt-report" />
+	<property name="suite.dir" value="suites" />
+	
+
+	<!-- /******************************************************************
+			Path for all the jar files & classes
+	***********************************************************************/ -->
+	<path id="classpaths">
+		<fileset dir="${libs}" includes="*.jar" />
+		<pathelement location="${classes}" />
+	</path>
+
+
+	<!-- /******************************************************************
+			Get all the environment and test information
+	***********************************************************************/ -->
+	<target name="info">
+		<echo message="Java Version : ${ant.java.version}" />
+		<echo message="Ant Version : ${ant.version}" />
+		<echo message="Project Name : ${ant.project.name}" />
+		<echo message="User Name : ${user.name}" />
+		<echo message="Project Location : ${user.dir}" />
+	</target>
+
+
+	<!-- /******************************************************************
+			Clean the logs, reports, screenshots, zip and classes folders
+	***********************************************************************/ -->
+	<target name="clean" description="Deleting the logs, reports, screenshots, zip and classes folders" depends="info">
+		<delete dir="${build}" />
+	</target>
+
+
+	<!-- /******************************************************************
+			Creates the classes, reports, screenshot, logs and zip folders
+	***********************************************************************/ -->
+	<target name="setup" depends="clean" description="Creates the classes, reports, and zip folders">
+		<mkdir dir="${build}" />
+		<mkdir dir="${screenshots}" />
+		<mkdir dir="${classes}" />
+		<mkdir dir="${logs}" />
+		<mkdir dir="${reports}" />
+		<mkdir dir="${junit.report}" />
+		<mkdir dir="${testNG.report}" />
+		<mkdir dir="${xslt.report}" />
+	</target>
+
+
+	<!-- /******************************************************************
+			Compile all the classes
+	***********************************************************************/ -->
+	<target name="compile" depends="setup">
+		<javac srcdir="${src}" destdir="${classes}" classpathref="classpaths" debug="true" />
+	</target>
+
+
+	<!-- /******************************************************************
+			Create Java archive (jar) file of core driver code
+	***********************************************************************/ -->
+	<target name="jar" depends="compile">
+		<jar destfile="${build}/coredriver.jar" basedir="classes" />
+	</target>
+	
+	
+	<!-- /******************************************************************
+	  		Ant task to run testNG test class
+	***********************************************************************/ -->
+	<target name="test" depends="compile">
+	    <taskdef resource="testngtasks" classpathref="classpaths"/>
+	    <testng classpathref="classpaths" outputDir="${testNG.report}" haltOnfailure="true">
+	    			<sysproperty key="test.platform" value="${test.platform}" />
+	    			<sysproperty key="browser" value="${test.browser}" />
+	    			<sysproperty key="test.url" value="${test.url}" />
+	          <xmlfileset dir="." includes="${suite.dir}/testng.xml" />
+	    </testng>
+	    <echo> Run Directory Classes </echo>
+	</target>
+	
+	
+	<!-- /******************************************************************
+	  		Ant task for generating XSLT reports
+	***********************************************************************/ -->
+	<target name="xslt-report">
+	 <xslt classpathref="classpaths" in="${testNG.report}/testng-results.xml" out="${reports.xslt}/index.html" style="resources/testng-results.xsl" processor="SaxonLiaison">
+	  <param expression="${reports.xslt}" name="${testNgXslt.outputDir}" />
+	  <param expression="true" name="testNgXslt.showRuntimeTotals" />
+	 </xslt>
+	</target>
+
+
+	<!-- /******************************************************************
+			Generate all types of reports
+	***********************************************************************/ -->
+	<target name="junit-report">
+		<junitreport todir="${junit.report}">
+			<fileset dir="${testNG.report}/junitreports">
+				<include name="TEST-*.xml" />
+			</fileset>
+			<report todir="${junit.report}" />
+		</junitreport>
+	</target>
+
+
+	<!-- /******************************************************************
+			Zip all the reports under the ${reports} directory
+	***********************************************************************/ -->
+	<target name="zipReport" depends="junit-report, xslt-report">
+		<zip destfile="${reports}/zip/testReport.zip" duplicate="preserve">
+			<zipfileset dir="${reports}" />
+		</zip>
+	</target>
+
+
+	<!-- /******************************************************************
+			Send an email by zipping all the reports as an attachment
+	***********************************************************************/ -->
+	<target name="send-email">
+		<!--TODO: depends="zipReport"-->
+		<mail encoding="mime" enableSSL="true" mailhost="smtp.gmail.com" mailport="25" subject="Automation Test Report" ssl="true" user="automation.pramati@gmail.com" password="pramati123">
+			
+			<from address="automation.pramati@gmail.com" />
+			<to address="pashapurae@castlighthealth.com" />
+			<message>
+				Hello,
+					
+				Please find the attachment for the report.
+				
+				Thank you,
+				Automation Team
+			</message>
+			<attachments>
+				<fileset dir="${reports}/zip/" />
+			</attachments>
+		</mail>
+		
+		 
+	</target>
+
+</project>	
