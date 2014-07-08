@@ -1,0 +1,17 @@
+.DS_Store
+.settings
+*.class
+.gradle/
+reports/
+results/
+test-output/
+build/
+lib/
+*.iws
+*.log
+.idea
+out
+*.ipr
+*.hprof
+.git - Copy/
+/bin
